@@ -56,8 +56,19 @@
       text-shadow: 0 0 5px #00ffcc;
       box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff;
       cursor: pointer;
+      position: relative;
     }
-    .shop, .upgrades {
+    #laserEffect {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      width: 2px;
+      height: 20px;
+      background: red;
+      display: none;
+      box-shadow: 0 0 10px red;
+    }
+    .shop, .upgrades, .exchange {
       padding: 20px;
       margin-top: 20px;
       background-color: #111;
@@ -85,6 +96,9 @@
   </style>
 </head>
 <body>
+  <audio autoplay loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-scifi.mp3" type="audio/mpeg">
+  </audio>
   <div class="header">
     <h1>Miner des Deadspot Coin</h1>
     <div id="clock"></div>
@@ -97,7 +111,7 @@
     <div>Niveau: <span id="level">1</span></div>
   </div>
   <div class="main">
-    <button id="clicker">✨ Miner de l'or ✨</button>
+    <button id="clicker">✨ Miner de l'or ✨<div id="laserEffect"></div></button>
   </div>
   <div class="upgrades">
     <h2>⚡ Améliorations</h2>
@@ -107,19 +121,31 @@
     <h2>🛒 Mineurs</h2>
     <div id="miners"></div>
   </div>
+  <div class="exchange">
+    <h2>💱 Convertir Deadspot</h2>
+    <p>1 Deadspot = 1.25 $</p>
+    <p>Valeur actuelle: <span id="usdValue">0.00</span> $</p>
+  </div>
   <div class="graph">
     <canvas id="gainChart" width="600" height="300"></canvas>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    let gold = 0, dsc = 0, ghs = 0, xp = 0, level = 1, clickPower = 1;
+    let gold = parseFloat(localStorage.getItem('gold')) || 0;
+    let dsc = parseFloat(localStorage.getItem('dsc')) || 0;
+    let ghs = parseFloat(localStorage.getItem('ghs')) || 0;
+    let xp = parseInt(localStorage.getItem('xp')) || 0;
+    let level = parseInt(localStorage.getItem('level')) || 1;
+    let clickPower = parseInt(localStorage.getItem('clickPower')) || 1;
 
     const goldEl = document.getElementById('gold');
     const dscEl = document.getElementById('dsc');
     const ghsEl = document.getElementById('ghs');
     const xpEl = document.getElementById('xp');
     const levelEl = document.getElementById('level');
+    const usdValueEl = document.getElementById('usdValue');
+    const laser = document.getElementById('laserEffect');
 
     function updateStats() {
       goldEl.textContent = gold.toFixed(1);
@@ -127,11 +153,24 @@
       ghsEl.textContent = ghs.toFixed(2);
       xpEl.textContent = xp;
       levelEl.textContent = level;
+      usdValueEl.textContent = (dsc * 1.25).toFixed(2);
+      save();
+    }
+
+    function save() {
+      localStorage.setItem('gold', gold);
+      localStorage.setItem('dsc', dsc);
+      localStorage.setItem('ghs', ghs);
+      localStorage.setItem('xp', xp);
+      localStorage.setItem('level', level);
+      localStorage.setItem('clickPower', clickPower);
     }
 
     document.getElementById('clicker').onclick = () => {
       gold += clickPower;
       xp += 1;
+      laser.style.display = 'block';
+      setTimeout(() => laser.style.display = 'none', 200);
       checkLevelUp();
       updateStats();
     };
@@ -152,6 +191,7 @@
 
     function generateMiners() {
       const container = document.getElementById('miners');
+      container.innerHTML = '';
       minersList.forEach((miner, i) => {
         const div = document.createElement('div');
         div.className = 'miner';
@@ -184,16 +224,16 @@
       updateChart();
     }, 1000);
 
-    // Clock (Heure Québec)
+    // Horloge Québec
     function updateClock() {
       const now = new Date();
-      now.setHours(now.getHours() - 0); // Québec: UTC-4 (généralement)
+      now.setHours(now.getHours());
       document.getElementById('clock').textContent = now.toLocaleString('fr-CA');
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Graphique gains
+    // Graph gain
     const ctx = document.getElementById('gainChart').getContext('2d');
     const gainChart = new Chart(ctx, {
       type: 'line',
@@ -229,7 +269,7 @@
         gainChart.data.datasets[0].data.shift();
       }
       gainChart.data.labels.push(time);
-      gainChart.data.datasets[0].data.push(dsc.toFixed(3));
+      gainChart.data.datasets[0].data.push(parseFloat(dsc.toFixed(3)));
       gainChart.update();
     }
 
