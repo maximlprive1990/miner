@@ -2,226 +2,242 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deadspot Miner Game</title>
+  <title>Deadspot Miner</title>
   <style>
     body {
-      background: black;
-      color: #b400ff;
+      background-color: #000;
+      color: #8A2BE2;
       font-family: Arial, sans-serif;
       text-align: center;
-      margin: 0;
-      padding: 0;
+      padding: 20px;
     }
-    h1, h2 {
-      margin-top: 10px;
-    }
-    .stats {
-      color: lime;
-      font-size: 18px;
-      margin: 10px;
-    }
-    .clicker {
-      font-size: 22px;
-      margin: 20px;
-    }
-    .shop, .miners, .purchase-section, .exchange-section {
-      border: 2px solid #b400ff;
-      margin: 20px auto;
-      padding: 10px;
-      width: 90%;
-      max-width: 600px;
-      background-color: #111;
-      border-radius: 10px;
-    }
-    button {
-      margin: 5px;
-      padding: 10px;
-      font-size: 16px;
-      background: #b400ff;
-      color: white;
-      border: none;
-      border-radius: 5px;
+    #clickBtn {
+      background-color: gold;
+      color: black;
+      font-size: 20px;
+      border-radius: 15px;
+      padding: 15px 30px;
       cursor: pointer;
+      box-shadow: 0 0 10px gold;
     }
-    button:hover {
-      background: #9100cc;
+    .store-item {
+      border: 1px solid #8A2BE2;
+      margin: 10px;
+      padding: 10px;
+      background-color: #111;
+    }
+    .miner {
+      margin-top: 10px;
+      padding: 5px;
+      background-color: #222;
+      color: #0f0;
+    }
+    #megaEffect {
+      animation: pulse 1s infinite;
+      font-weight: bold;
+    }
+    @keyframes pulse {
+      0% { color: #FF00FF; }
+      50% { color: #00FFFF; }
+      100% { color: #FF00FF; }
     }
   </style>
 </head>
 <body>
+  <h1>💎 Deadspot Miner 💎</h1>
+  <p><strong>XP:</strong> <span id="xp">0</span> | <strong>Niveau:</strong> <span id="level">1</span> | <strong>Or:</strong> <span id="gold">0</span> | <strong>DSC:</strong> <span id="deadspot">0</span> | <strong>GH/s:</strong> <span id="ghs">0</span></p>
 
-<h1>Deadspot Miner Game</h1>
-<div class="stats">
-  <div>XP: <span id="xp">0</span> | Niveau: <span id="level">1</span></div>
-  <div>Or: <span id="gold">0</span> | Deadspot: <span id="deadspot">0</span></div>
-  <div>Puissance de minage: <span id="ghs">0</span> GH/s</div>
-</div>
+  <button id="clickBtn">✨ Click ✨</button>
 
-<div class="clicker">
-  <button onclick="mine()">Miner (+1 XP, +0.01 Or)</button>
-</div>
+  <div class="store-item">
+    <h3>Améliorations</h3>
+    <button onclick="buyDoubleClicker()">Double Clicker (50 000 or)</button><br>
+    <button onclick="buyAutoClicker()">Auto Clicker (10 000 or)</button><br>
+    <button onclick="buyMegaClicker()">Mega Clicker (250 000 or)</button><br>
+    <p id="megaEffect"></p>
+  </div>
 
-<div class="shop">
-  <h2>Améliorations</h2>
-  <button onclick="buyDoubleClicker()">Double Clicker (50,000 or)</button>
-  <button onclick="buyAutoClicker()">Auto Clicker (10,000 or)</button>
-  <button onclick="buyMegaClicker()">Mega Clicker (250,000 or)</button>
-</div>
+  <div class="store-item">
+    <h3>Mineurs GH/s</h3>
+    <div id="miners"></div>
+  </div>
 
-<div class="miners">
-  <h2>Mineurs GH/s</h2>
-  <button onclick="buyMiner(1, 100)">Miner 1 GH/s (100 or)</button>
-  <button onclick="buyMiner(5, 500)">Miner 5 GH/s (500 or)</button>
-  <button onclick="buyMiner(10, 1000)">Miner 10 GH/s (1,000 or)</button>
-</div>
+  <script>
+    let xp = 0, level = 1, gold = 0, deadspot = 0, ghs = 0;
+    let doubleClick = false, autoClick = false, megaClickActive = false;
 
-<div class="purchase-section">
-  <h2>Achat via Payeer</h2>
-  <p>Envoyer à : <strong>P1112145219</strong></p>
-  <input type="text" id="idtx" placeholder="Entrer ID de transaction Payeer">
-  <select id="bonusType">
-    <option value="dsc">+1000 Deadspot Coin</option>
-    <option value="or">+2000 Or</option>
-  </select>
-  <button onclick="validerPayeer()">Valider</button>
-  <p id="payeerMessage"></p>
-</div>
+    const xpNeeded = () => 1000 * Math.pow(2, level - 1);
 
-<div class="exchange-section">
-  <h2>Échanger Deadspot contre Crypto (FaucetPay)</h2>
-  <input type="text" id="wallet" placeholder="Adresse crypto">
-  <select id="currency">
-    <option value="BTC">BTC</option>
-    <option value="DOGE">DOGE</option>
-    <option value="TRX">TRX</option>
-  </select>
-  <input type="number" id="amount" placeholder="Montant à échanger">
-  <button onclick="sendToFaucetPay()">Échanger</button>
-  <p id="exchangeMessage"></p>
-</div>
-
-<script>
-  let xp = 0, level = 1, gold = 0, deadspot = 0, ghs = 0;
-  let doubleClick = false, autoClick = false;
-
-  function updateStats() {
-    document.getElementById("xp").textContent = xp;
-    document.getElementById("level").textContent = level;
-    document.getElementById("gold").textContent = gold.toFixed(2);
-    document.getElementById("deadspot").textContent = deadspot.toFixed(2);
-    document.getElementById("ghs").textContent = ghs;
-  }
-
-  function mine() {
-    let gain = 0.01;
-    let exp = 1;
-    if (doubleClick) gain *= 2;
-    if (megaClickActive) gain *= 20;
-
-    gold += gain;
-    xp += exp;
-    if (xp >= level * 100) {
-      xp = 0;
-      level++;
-    }
-    updateStats();
-  }
-
-  function buyDoubleClicker() {
-    if (gold >= 50000) {
-      gold -= 50000;
-      doubleClick = true;
+    document.getElementById("clickBtn").onclick = () => {
+      let baseGold = 0.0134;
+      let baseXP = 1;
+      let multiplier = 1;
+      if (doubleClick) multiplier *= 2;
+      if (megaClickActive) multiplier *= 20;
+      gold += baseGold * multiplier;
+      xp += baseXP * multiplier;
+      checkLevel();
       updateStats();
-      alert("Double Click activé !");
-    }
-  }
+    };
 
-  function buyAutoClicker() {
-    if (gold >= 10000) {
-      gold -= 10000;
-      autoClick = true;
-      setInterval(mine, 3000);
-      updateStats();
-      alert("Auto Click activé (1 clic/3s)");
-    }
-  }
-
-  let megaClickActive = false;
-  function buyMegaClicker() {
-    if (gold >= 250000 && !megaClickActive) {
-      gold -= 250000;
-      megaClickActive = true;
-      alert("Mega Click activé pendant 15s !");
-      setTimeout(() => {
-        megaClickActive = false;
-        alert("Mega Click terminé.");
-      }, 15000);
-    }
-  }
-
-  function buyMiner(power, price) {
-    if (gold >= price) {
-      gold -= price;
-      ghs += power;
-      setInterval(() => {
-        deadspot += power * 0.001;
-        updateStats();
-      }, 5000);
-      updateStats();
-    }
-  }
-
-  function validerPayeer() {
-    const idtx = document.getElementById("idtx").value;
-    const bonus = document.getElementById("bonusType").value;
-    if (idtx.length > 5) {
-      if (bonus === "dsc") {
-        deadspot += 1000;
-      } else {
-        gold += 2000;
+    function checkLevel() {
+      while (xp >= xpNeeded()) {
+        xp -= xpNeeded();
+        level++;
       }
-      updateStats();
-      document.getElementById("payeerMessage").textContent = "✅ Bonus appliqué !";
-    } else {
-      document.getElementById("payeerMessage").textContent = "❌ IDTX invalide.";
     }
-  }
 
-  function sendToFaucetPay() {
-    const wallet = document.getElementById("wallet").value;
-    const currency = document.getElementById("currency").value;
-    const amount = parseFloat(document.getElementById("amount").value);
-    if (wallet && amount > 0 && deadspot >= amount) {
-      deadspot -= amount;
-      updateStats();
-      // Appel AJAX vers faucetpay.php
-      fetch("faucetpay.php", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet, currency, amount })
-      })
-      .then(res => res.text())
-      .then(data => {
-        document.getElementById("exchangeMessage").textContent = data;
-      });
-    } else {
-      document.getElementById("exchangeMessage").textContent = "Solde insuffisant ou informations manquantes.";
+    function updateStats() {
+      document.getElementById("xp").textContent = Math.floor(xp);
+      document.getElementById("level").textContent = level;
+      document.getElementById("gold").textContent = gold.toFixed(2);
+      document.getElementById("deadspot").textContent = deadspot.toFixed(3);
+      document.getElementById("ghs").textContent = ghs.toFixed(1);
     }
-  }
 
-  updateStats();
-  fetch('faucetpay.php', {
+    function buyDoubleClicker() {
+      if (gold >= 50000) {
+        gold -= 50000;
+        doubleClick = true;
+        updateStats();
+        alert("Double Click activé !");
+      }
+    }
+
+    function buyAutoClicker() {
+      if (gold >= 10000) {
+        gold -= 10000;
+        autoClick = true;
+        setInterval(() => document.getElementById("clickBtn").click(), 3000);
+        updateStats();
+        alert("Auto Click activé !");
+      }
+    }
+
+    function buyMegaClicker() {
+      if (gold >= 250000 && !megaClickActive) {
+        gold -= 250000;
+        megaClickActive = true;
+        document.getElementById("megaEffect").textContent = "💥 MEGA CLICK ACTIVÉ POUR 15s! 💥";
+        updateStats();
+        setTimeout(() => {
+          megaClickActive = false;
+          document.getElementById("megaEffect").textContent = "";
+        }, 15000);
+      }
+    }
+
+    // Mineurs
+    const minerList = [
+      { name: "Mini Miner", ghs: 0.5, cost: 1000 },
+      { name: "Basic Miner", ghs: 2, cost: 5000 },
+      { name: "Pro Miner", ghs: 10, cost: 15000 },
+      { name: "Ultra Miner", ghs: 50, cost: 50000 },
+      { name: "Mega Miner", ghs: 100, cost: 150000 },
+      { name: "Supernova Miner", ghs: 250, cost: 500000 },
+      { name: "Quantum Miner", ghs: 500, cost: 1000000 },
+    ];
+
+    const minersDiv = document.getElementById("miners");
+    minerList.forEach((miner, index) => {
+      const btn = document.createElement("button");
+      btn.textContent = `${miner.name} (${miner.ghs} GH/s) - ${miner.cost} or`;
+      btn.className = "miner";
+      btn.onclick = () => buyMiner(miner);
+      minersDiv.appendChild(btn);
+    });
+
+    function buyMiner(miner) {
+      if (gold >= miner.cost) {
+        gold -= miner.cost;
+        ghs += miner.ghs;
+        updateStats();
+        alert(`${miner.name} acheté !`);
+      }
+    }
+
+    // Génération automatique avec GH/s
+    setInterval(() => {
+      deadspot += ghs * 0.001;
+      updateStats();
+    }, 5000);
+
+    // Sauvegarde & chargement
+    function saveGame() {
+      const saveData = {
+        xp, level, gold, deadspot, ghs,
+        doubleClick, autoClick, megaClickActive
+      };
+      localStorage.setItem("deadspotSave", JSON.stringify(saveData));
+    }
+
+    function loadGame() {
+      const saved = localStorage.getItem("deadspotSave");
+      if (saved) {
+        const data = JSON.parse(saved);
+        xp = data.xp || 0;
+        level = data.level || 1;
+        gold = data.gold || 0;
+        deadspot = data.deadspot || 0;
+        ghs = data.ghs || 0;
+        doubleClick = data.doubleClick || false;
+        autoClick = data.autoClick || false;
+        megaClickActive = data.megaClickActive || false;
+
+        if (autoClick) setInterval(() => document.getElementById("clickBtn").click(), 3000);
+        updateStats();
+      }
+    }
+
+    loadGame();
+    setInterval(saveGame, 5000);
+    function saveToServer() {
+  const saveData = {
+    xp,
+    level,
+    gold,
+    deadspot,
+    ghs,
+    doubleClick,
+    autoClick,
+    megaClickActive
+  };
+
+  fetch('save.php', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-        wallet: walletInput,
-        amount: amountToSend,
-        currency: selectedCrypto
-    })
-})
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(saveData)
+  });
+}
 
-</script>
+function loadFromServer() {
+  fetch('load.php')
+    .then(response => response.json())
+    .then(data => {
+      xp = data.xp || 0;
+      level = data.level || 1;
+      gold = data.gold || 0;
+      deadspot = data.deadspot || 0;
+      ghs = data.ghs || 0;
+      doubleClick = data.doubleClick || false;
+      autoClick = data.autoClick || false;
+      megaClickActive = data.megaClickActive || false;
+      updateStats();
+    });
+}
+
+// Appelle la sauvegarde toutes les 10 secondes
+setInterval(() => {
+  saveGame();         // localStorage
+  saveToServer();     // serveur
+}, 10000);
+
+// Charger depuis le serveur
+loadFromServer();
+
+  </script>
+</body>
+</html>
 
 </body>
 </html>
