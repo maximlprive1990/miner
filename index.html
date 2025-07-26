@@ -1,111 +1,239 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Liste de liens referral</title>
+  <meta charset="UTF-8">
+  <title>Jeu de Minage Deadspot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       background-color: #000;
-      color: #39ff14; /* vert néon */
-      font-family: 'Arial', sans-serif;
-      padding: 20px;
-    }
-    h1 {
+      color: #AD00FF;
+      font-family: 'Orbitron', sans-serif;
       text-align: center;
-      text-shadow: 0 0 8px #39ff14;
-      margin-bottom: 30px;
+      margin: 0;
     }
-    .referral-links {
-      background-color: #111;
-      border: 2px solid #39ff14;
-      border-radius: 8px;
-      padding: 15px;
-      font-size: 1.1em;
-      line-height: 1.6;
-      user-select: all; /* Permet de sélectionner facilement tout le texte */
-      white-space: pre-wrap; /* Garde les retours à la ligne */
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 0 10px #39ff14;
+    #gold, #exp, #deadspot, #level, #ghs {
+      color: #00FF00;
+      font-size: 20px;
+    }
+    .click-button {
+      background-color: gold;
+      border: none;
+      border-radius: 50%;
+      width: 150px;
+      height: 150px;
+      font-size: 22px;
+      cursor: pointer;
+      margin: 20px;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px gold; }
+      50% { box-shadow: 0 0 30px gold; }
+      100% { box-shadow: 0 0 10px gold; }
+    }
+    .shop, .upgrades {
+      margin: 20px auto;
+      max-width: 400px;
+      background: #111;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #AD00FF;
+    }
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #AD00FF;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    canvas {
+      background: #111;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+    #laser {
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(to right, transparent, #AD00FF, transparent);
+      animation: laserAnim 2s infinite;
+    }
+    @keyframes laserAnim {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
   </style>
 </head>
 <body>
-  <h1>Liens Referral (copier-coller)</h1>
-  <div class="referral-links" tabindex="0">
-referals:
-https://xusdt.app/r/FBG8C83BDDC8F
-https://ltminer.pro/?ref=520
-https://www.zerbux.com/ref/416/
-https://earn-trump.com/?ref=dOFq
-https://bearcoin.cc/?ref=maximlprive90
-https://keran.co/?ref=113229
-https://bnbfarm.io/auth/register?ref=RK36C8FX
-https://t.me/hamsterking_game_bot?startapp=7707218336
-https://eonmining.site/user/register?ref=maximlprive90
-https://www.prizetclickaz.buzz/p?0621350706072141114
-https://clouddoge.biz/ref/4844
-https://www.satoshitap.com/ref/maximlprive90
-https://blocklooter.com/?r=8778
-https://gpu-miner.site/register/11481
-http://cointiply.com/r/m3eZV
-https://faucetpay.io/?r=492929
-https://tronking.io/?ref=maximlprive90
-https://tonking.io/?ref=maximlprive90
-https://liteking.io/?ref=maximlprive90
-https://etherking.io/?ref=maximlprive90
-https://simplebits.io/ref/SZppiCJMOx8l
-https://miningblocks.club/?Referral=178
-https://www.contract-miner.com/?r=41341402065a9baae03a8a
-https://freematicgo.com/r/FBG23ED1EFF77
-https://megaco.in/?r=f12980ca
-https://teaserfast.ru/a/maximlprive90
-https://rollercoin.com/?r=k1xc8514
-https://limercoin.com/?ref=cenrq76c
-https://catmine.io/a/72155
-https://cryptodrip.io/index.php?ref=11481
-https://adnade.net/?ref=maximlprive90
-https://earnbot.io/?r=z0st3j03c2db
-https://cryptopersecond.com/?invitedby=273442847
-https://viefaucet.com?r=64c866f539d82707177b242c
-https://autofaucet.org/r/maxim6969
-https://chainers.io/?r=lzt79xqp
-https://www.rotate4all.com/ptp/?r=botbitcoin90
-https://browsermine.com/?ref=7185911
-https://claimdoge.com/?r=DDVYeK8MiizfsnzLtigSAWfx6PH24puQze
-https://jmcrypto.eu.org/?rf=bWF4aW1scHJpdmU5MEBnbWFpbC5jb20%3D
-https://earn-crypto.co/?ref=10116
-https://cryptomininggame.com/?ref=65bb682cae24a335914a9322
-https://ltcunit.com/?ref=maximlprive90
-https://browsermine.com/?ref=7185911
-=Wallet et micro-wallet referals links!=
-https://faucetpay.io/?r=Deadspot
-https://faucetpay.io/?r=492929
+  <h1>Jeu de Minage Deadspot</h1>
+  <div id="laser"></div>
 
-=telegram link crypto currency!!:
-https://t.me/LabradorAdventuresBot/start?startapp=ref_20XX9B314A
-https://t.me/WeMineBot/mine?startapp=ref_7C67HP6MHY
-https://t.me/fintopio/wallet?startapp=reflink-reflink_WbHc3sHWg5oFUu0O- 
-https://t.me/proxypulse_bot?start=7707218336
-https://t.me/FourSeasonsFarmBot?start=7707218336
-https://t.me/GenkiMinerBot/GenkiMiner?startapp=d7YBLDwv
-https://t.me/MineVerseBot/app?startapp=r_7707218336
-https://t.me/bananaton_bot?start=7707218336
-https://t.me/core_xbot?start=669361
-https://t.me/aicroll_bot?start=215597
-https://t.me/MatchMoney_gamebot/start?startapp=userId=7707218336
-https://t.me/spaceadv_game_bot/play?startapp=7707218336
-https://t.me/share/url?url=https://t.me/AIVilleBot/AIVille?startapp=1375070
-https://t.me/fruitcryptofarm_bot/fruitcryptofarm?startapp=7707218336
-
-
-- Zeroreferal-                                                :
-https://rimicoins.com/?ref=4097
-https://zerofaucet.com/?ref=t1Jy6gRU98QApmXdMoEBLbMwqhASt9pbMo5
-https://donaldco.in/index.php?ref=maximlprive90                                                                                         
-https://camelbtc.com/?ref=17311
+  <div class="stats">
+    <p>🪙 Or: <span id="gold">0</span></p>
+    <p>📈 XP: <span id="exp">0</span></p>
+    <p>⭐ Niveau: <span id="level">1</span></p>
+    <p>💎 Deadspot: <span id="deadspot">0</span></p>
+    <p>⚡ GH/s: <span id="ghs">0</span></p>
   </div>
+
+  <button class="click-button" onclick="mine()">✨ Miner de l'or ✨</button>
+
+  <div class="upgrades">
+    <h2>Améliorations</h2>
+    <button class="btn" onclick="buyDoubleClicker()">Double Clicker (50,000 or)</button><br>
+    <button class="btn" onclick="buyAutoClicker()">Auto Clicker 60s (10,000 or)</button><br>
+    <button class="btn" onclick="buyMegaClicker()">Mega Clicker 15s (250,00 or)</button>
+  </div>
+
+  <div class="shop">
+    <h2>Boutique de Mineurs</h2>
+    <button class="btn" onclick="buyMiner(1, 100)">Miner 1 GH/s (1000 or)</button>
+    <button class="btn" onclick="buyMiner(10, 1000)">Miner 10 GH/s (1,0000 or)</button>
+    <button class="btn" onclick="buyMiner(10, 1000)">Miner 250 GH/s (2,0000 or)</button>
+    <button class="btn" onclick="buyMiner(10, 1000)">Miner 575 GH/s (6,0000 or)</button>
+    <button class="btn" onclick="buyMiner(10, 1000)">Miner 1 TH/s (12,0000 or)</button>
+  </div>
+
+  <canvas id="chart" width="400" height="150"></canvas>
+
+  <audio id="bgm" src="https://www.fesliyanstudios.com/play-mp3/387" autoplay loop></audio>
+
+  <script>
+    let gold = parseFloat(localStorage.getItem('gold')) || 0;
+    let exp = parseFloat(localStorage.getItem('exp')) || 0;
+    let level = parseInt(localStorage.getItem('level')) || 1;
+    let deadspot = parseFloat(localStorage.getItem('deadspot')) || 0;
+    let ghs = parseFloat(localStorage.getItem('ghs')) || 0;
+    let clickPower = parseFloat(localStorage.getItem('clickPower')) || 0.01;
+    let doubleClicker = localStorage.getItem('doubleClicker') === 'true';
+    let chart = new Chart(document.getElementById('chart'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Deadspot',
+          data: [],
+          borderColor: '#AD00FF',
+          borderWidth: 2
+        }]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    function save() {
+      localStorage.setItem('gold', gold);
+      localStorage.setItem('exp', exp);
+      localStorage.setItem('level', level);
+      localStorage.setItem('deadspot', deadspot);
+      localStorage.setItem('ghs', ghs);
+      localStorage.setItem('clickPower', clickPower);
+      localStorage.setItem('doubleClicker', doubleClicker);
+    }
+
+    function updateStats() {
+      document.getElementById('gold').textContent = gold.toFixed(4);
+      document.getElementById('exp').textContent = exp.toFixed(4);
+      document.getElementById('level').textContent = level;
+      document.getElementById('deadspot').textContent = deadspot.toFixed(4);
+      document.getElementById('ghs').textContent = ghs.toFixed(2);
+    }
+
+    function checkLevelUp() {
+      let needed = level * 100;
+      if (exp >= needed) {
+        exp -= needed;
+        level++;
+        clickPower += 0.005;
+      }
+    }
+
+    function mine() {
+      let gain = clickPower;
+      if (megaClickerActive) gain += 0.20;
+      if (doubleClicker) gain *= 2;
+      gold += gain;
+      exp += 0.001;
+      checkLevelUp();
+      updateStats();
+      save();
+    }
+
+    function buyMiner(power, price) {
+      if (gold >= price) {
+        gold -= price;
+        ghs += power;
+        updateStats();
+        save();
+      }
+    }
+
+    function autoMine() {
+      let mined = ghs * 0.0001;
+      deadspot += mined;
+      updateStats();
+      save();
+      chart.data.labels.push('');
+      chart.data.datasets[0].data.push(deadspot.toFixed(4));
+      if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+      }
+      chart.update();
+    }
+
+    setInterval(autoMine, 1000);
+
+    function buyDoubleClicker() {
+      if (!doubleClicker && gold >= 50000) {
+        gold -= 50000;
+        doubleClicker = true;
+        updateStats();
+        save();
+        alert('Double Clicker activé !');
+      }
+    }
+
+    function buyAutoClicker() {
+      if (gold >= 10000) {
+        gold -= 10000;
+        updateStats();
+        save();
+        let duration = 60; // secondes
+        let clicks = 0;
+        let interval = setInterval(() => {
+          if (clicks >= duration * 0.5) {
+            clearInterval(interval);
+            return;
+          }
+          mine();
+          clicks++;
+        }, 2000);
+        alert("Auto Clicker activé pendant 60 secondes !");
+      }
+    }
+
+    let megaClickerActive = false;
+    function buyMegaClicker() {
+      if (gold >= 250000 && !megaClickerActive) {
+        gold -= 250000;
+        updateStats();
+        save();
+        megaClickerActive = true;
+        alert("Mega Clicker activé pendant 15 secondes !");
+        setTimeout(() => {
+          megaClickerActive = false;
+          alert("Mega Clicker terminé !");
+        }, 15000);
+      }
+    }
+
+    updateStats();
+  </script>
 </body>
+</html>
 </html>
 
 
