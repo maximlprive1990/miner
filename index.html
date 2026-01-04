@@ -2,91 +2,105 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>CoinIMP Live Data & Graph</title>
+<title>CoinIMP Live Stats</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-    body { background:#111; color:#eee; font-family:Arial, sans-serif; text-align:center; }
-    #valueBox { font-size:32px; margin:20px auto; color:#00ff99; }
-    canvas { max-width:90%; margin: auto; }
+body {
+    background:#000;
+    color:#0f0;
+    font-family: "Courier New", monospace;
+    text-align:center;
+}
+
+/* compteur numérique style montre / année */
+.counter {
+    font-size:48px;
+    letter-spacing:4px;
+    background:#020;
+    display:inline-block;
+    padding:15px 25px;
+    border:2px solid #0f0;
+    margin:20px auto;
+}
+
+canvas {
+    max-width:90%;
+    margin:auto;
+}
 </style>
 </head>
+
 <body>
 
-<h1>CoinIMP Live Stats</h1>
-<div id="valueBox">Chargement...</div>
-<canvas id="liveChart"></canvas>
+<h2>CoinIMP – Hashes en temps réel</h2>
+
+<div id="digitalCounter" class="counter">000000000</div>
+
+<canvas id="chart"></canvas>
 
 <script>
-const PUBLIC_KEY  = "c909ccf8810603fd4771d73c7ea34f460ef48b2eb49dfefbc072127a27495c39";
-const PRIVATE_KEY = "TA_CLE_PRIVEE_ICI"; // Remplace par ta clé privée
-
-const API_ENDPOINT = "https://www.coinimp.com/api/v2/hashes";
+const SITE_KEY = "c909ccf8810603fd4771d73c7ea34f460ef48b2eb49dfefbc072127a27495c39";
+const API_URL = `https://www.coinimp.com/api/v2/site/${SITE_KEY}`;
 
 let labels = [];
-let dataPoints = [];
+let values = [];
 
-const ctx = document.getElementById("liveChart").getContext("2d");
+const ctx = document.getElementById("chart").getContext("2d");
+
 const chart = new Chart(ctx, {
     type: "line",
     data: {
         labels: labels,
         datasets: [{
-            label: "Hash total",
-            data: dataPoints,
-            borderColor: "#00ff99",
-            fill: false,
-            tension: 0.3
+            label: "Total Hashes",
+            data: values,
+            borderWidth: 2,
+            tension: 0.25
         }]
     },
     options: {
-        scales: { y: { beginAtZero: true } }
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true }
+        }
     }
 });
 
-async function fetchData() {
+function formatCounter(num) {
+    return num.toString().padStart(9, "0");
+}
+
+async function update() {
     try {
-        const res = await fetch(API_ENDPOINT, {
-            headers: {
-                "X-API-ID": PUBLIC_KEY,
-                "X-API-KEY": PRIVATE_KEY
-            }
-        });
+        const res = await fetch(API_URL);
         const json = await res.json();
-        if (!json.status || json.status !== "success") {
-            console.error("Erreur API", json);
-            return;
-        }
 
-        // Donnée retournée (hashes)
-        const value = Number(json.message.data || 0);
+        // CoinIMP retourne total_hashes
+        const hashes = Math.floor(json.total_hashes || 0);
 
-        document.getElementById("valueBox").textContent = value.toLocaleString();
+        document.getElementById("digitalCounter").textContent =
+            formatCounter(hashes);
 
-        const now = new Date().toLocaleTimeString();
-        labels.push(now);
-        dataPoints.push(value);
+        const time = new Date().toLocaleTimeString();
+        labels.push(time);
+        values.push(hashes);
 
-        if (labels.length > 20) {
+        if (labels.length > 25) {
             labels.shift();
-            dataPoints.shift();
+            values.shift();
         }
 
         chart.update();
-    } catch (err) {
-        console.error(err);
+    } catch (e) {
+        console.error("Erreur CoinIMP", e);
     }
 }
 
-fetchData();
-setInterval(fetchData, 5000);
-
+update();
+setInterval(update, 5000);
 </script>
 
 </body>
 </html>
-
-</html>
-</html>
-
 
