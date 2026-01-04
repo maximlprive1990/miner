@@ -1,238 +1,91 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Jeu de Minage Deadspot</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      background-color: #000;
-      color: #AD00FF;
-      font-family: 'Orbitron', sans-serif;
-      text-align: center;
-      margin: 0;
-    }
-    #gold, #exp, #deadspot, #level, #ghs {
-      color: #00FF00;
-      font-size: 20px;
-    }
-    .click-button {
-      background-color: gold;
-      border: none;
-      border-radius: 50%;
-      width: 150px;
-      height: 150px;
-      font-size: 22px;
-      cursor: pointer;
-      margin: 20px;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 10px gold; }
-      50% { box-shadow: 0 0 30px gold; }
-      100% { box-shadow: 0 0 10px gold; }
-    }
-    .shop, .upgrades {
-      margin: 20px auto;
-      max-width: 400px;
-      background: #111;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px #AD00FF;
-    }
-    .btn {
-      padding: 10px 20px;
-      margin: 5px;
-      background: #AD00FF;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    canvas {
-      background: #111;
-      margin-top: 20px;
-      border-radius: 10px;
-    }
-    #laser {
-      width: 100%;
-      height: 4px;
-      background: linear-gradient(to right, transparent, #AD00FF, transparent);
-      animation: laserAnim 2s infinite;
-    }
-    @keyframes laserAnim {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>CoinIMP Live Data & Graph</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    body { background:#111; color:#eee; font-family:Arial, sans-serif; text-align:center; }
+    #valueBox { font-size:32px; margin:20px auto; color:#00ff99; }
+    canvas { max-width:90%; margin: auto; }
+</style>
 </head>
 <body>
-  <h1>Jeu de Minage Deadspot</h1>
-  <div id="laser"></div>
 
-  <div class="stats">
-    <p>🪙 Or: <span id="gold">0</span></p>
-    <p>📈 XP: <span id="exp">0</span></p>
-    <p>⭐ Niveau: <span id="level">1</span></p>
-    <p>💎 Deadspot: <span id="deadspot">0</span></p>
-    <p>⚡ GH/s: <span id="ghs">0</span></p>
-  </div>
+<h1>CoinIMP Live Stats</h1>
+<div id="valueBox">Chargement...</div>
+<canvas id="liveChart"></canvas>
 
-  <button class="click-button" onclick="mine()">✨ Miner de l'or ✨</button>
+<script>
+const PUBLIC_KEY  = "c909ccf8810603fd4771d73c7ea34f460ef48b2eb49dfefbc072127a27495c39";
+const PRIVATE_KEY = "TA_CLE_PRIVEE_ICI"; // Remplace par ta clé privée
 
-  <div class="upgrades">
-    <h2>Améliorations</h2>
-    <button class="btn" onclick="buyDoubleClicker()">Double Clicker (50,000 or)</button><br>
-    <button class="btn" onclick="buyAutoClicker()">Auto Clicker 60s (10,000 or)</button><br>
-    <button class="btn" onclick="buyMegaClicker()">Mega Clicker 15s (250,00 or)</button>
-  </div>
+const API_ENDPOINT = "https://www.coinimp.com/api/v2/hashes";
 
-  <div class="shop">
-    <h2>Boutique de Mineurs</h2>
-    <button class="btn" onclick="buyMiner(1, 100)">Miner 1 GH/s (1000 or)</button>
-    <button class="btn" onclick="buyMiner(10, 1000)">Miner 10 GH/s (1,0000 or)</button>
-    <button class="btn" onclick="buyMiner(10, 1000)">Miner 250 GH/s (2,0000 or)</button>
-    <button class="btn" onclick="buyMiner(10, 1000)">Miner 575 GH/s (6,0000 or)</button>
-    <button class="btn" onclick="buyMiner(10, 1000)">Miner 1 TH/s (12,0000 or)</button>
-  </div>
+let labels = [];
+let dataPoints = [];
 
-  <canvas id="chart" width="400" height="150"></canvas>
-
-  <audio id="bgm" src="https://www.fesliyanstudios.com/play-mp3/387" autoplay loop></audio>
-
-  <script>
-    let gold = parseFloat(localStorage.getItem('gold')) || 0;
-    let exp = parseFloat(localStorage.getItem('exp')) || 0;
-    let level = parseInt(localStorage.getItem('level')) || 1;
-    let deadspot = parseFloat(localStorage.getItem('deadspot')) || 0;
-    let ghs = parseFloat(localStorage.getItem('ghs')) || 0;
-    let clickPower = parseFloat(localStorage.getItem('clickPower')) || 0.01;
-    let doubleClicker = localStorage.getItem('doubleClicker') === 'true';
-    let chart = new Chart(document.getElementById('chart'), {
-      type: 'line',
-      data: {
-        labels: [],
+const ctx = document.getElementById("liveChart").getContext("2d");
+const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: labels,
         datasets: [{
-          label: 'Deadspot',
-          data: [],
-          borderColor: '#AD00FF',
-          borderWidth: 2
+            label: "Hash total",
+            data: dataPoints,
+            borderColor: "#00ff99",
+            fill: false,
+            tension: 0.3
         }]
-      },
-      options: { responsive: true, scales: { y: { beginAtZero: true } } }
-    });
-
-    function save() {
-      localStorage.setItem('gold', gold);
-      localStorage.setItem('exp', exp);
-      localStorage.setItem('level', level);
-      localStorage.setItem('deadspot', deadspot);
-      localStorage.setItem('ghs', ghs);
-      localStorage.setItem('clickPower', clickPower);
-      localStorage.setItem('doubleClicker', doubleClicker);
+    },
+    options: {
+        scales: { y: { beginAtZero: true } }
     }
+});
 
-    function updateStats() {
-      document.getElementById('gold').textContent = gold.toFixed(4);
-      document.getElementById('exp').textContent = exp.toFixed(4);
-      document.getElementById('level').textContent = level;
-      document.getElementById('deadspot').textContent = deadspot.toFixed(4);
-      document.getElementById('ghs').textContent = ghs.toFixed(2);
-    }
-
-    function checkLevelUp() {
-      let needed = level * 100;
-      if (exp >= needed) {
-        exp -= needed;
-        level++;
-        clickPower += 0.005;
-      }
-    }
-
-    function mine() {
-      let gain = clickPower;
-      if (megaClickerActive) gain += 0.20;
-      if (doubleClicker) gain *= 2;
-      gold += gain;
-      exp += 0.001;
-      checkLevelUp();
-      updateStats();
-      save();
-    }
-
-    function buyMiner(power, price) {
-      if (gold >= price) {
-        gold -= price;
-        ghs += power;
-        updateStats();
-        save();
-      }
-    }
-
-    function autoMine() {
-      let mined = ghs * 0.0001;
-      deadspot += mined;
-      updateStats();
-      save();
-      chart.data.labels.push('');
-      chart.data.datasets[0].data.push(deadspot.toFixed(4));
-      if (chart.data.labels.length > 20) {
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
-      }
-      chart.update();
-    }
-
-    setInterval(autoMine, 1000);
-
-    function buyDoubleClicker() {
-      if (!doubleClicker && gold >= 50000) {
-        gold -= 50000;
-        doubleClicker = true;
-        updateStats();
-        save();
-        alert('Double Clicker activé !');
-      }
-    }
-
-    function buyAutoClicker() {
-      if (gold >= 10000) {
-        gold -= 10000;
-        updateStats();
-        save();
-        let duration = 60; // secondes
-        let clicks = 0;
-        let interval = setInterval(() => {
-          if (clicks >= duration * 0.5) {
-            clearInterval(interval);
+async function fetchData() {
+    try {
+        const res = await fetch(API_ENDPOINT, {
+            headers: {
+                "X-API-ID": PUBLIC_KEY,
+                "X-API-KEY": PRIVATE_KEY
+            }
+        });
+        const json = await res.json();
+        if (!json.status || json.status !== "success") {
+            console.error("Erreur API", json);
             return;
-          }
-          mine();
-          clicks++;
-        }, 2000);
-        alert("Auto Clicker activé pendant 60 secondes !");
-      }
-    }
+        }
 
-    let megaClickerActive = false;
-    function buyMegaClicker() {
-      if (gold >= 250000 && !megaClickerActive) {
-        gold -= 250000;
-        updateStats();
-        save();
-        megaClickerActive = true;
-        alert("Mega Clicker activé pendant 15 secondes !");
-        setTimeout(() => {
-          megaClickerActive = false;
-          alert("Mega Clicker terminé !");
-        }, 15000);
-      }
-    }
+        // Donnée retournée (hashes)
+        const value = Number(json.message.data || 0);
 
-    updateStats();
-  </script>
+        document.getElementById("valueBox").textContent = value.toLocaleString();
+
+        const now = new Date().toLocaleTimeString();
+        labels.push(now);
+        dataPoints.push(value);
+
+        if (labels.length > 20) {
+            labels.shift();
+            dataPoints.shift();
+        }
+
+        chart.update();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+fetchData();
+setInterval(fetchData, 5000);
+
+</script>
+
 </body>
+</html>
+
 </html>
 </html>
 
