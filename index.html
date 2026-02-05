@@ -2,105 +2,177 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>CoinIMP Live Stats</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<title>Deadspot Click Game</title>
 <style>
-body {
-    background:#000;
-    color:#0f0;
-    font-family: "Courier New", monospace;
+body{
+    background:#0b0b0b;
+    color:#eee;
+    font-family:Arial;
     text-align:center;
 }
-
-/* compteur numérique style montre / année */
-.counter {
-    font-size:48px;
-    letter-spacing:4px;
-    background:#020;
-    display:inline-block;
-    padding:15px 25px;
-    border:2px solid #0f0;
-    margin:20px auto;
+.container{max-width:900px;margin:auto}
+h1{color:#8aff8a}
+button{
+    padding:10px 20px;
+    margin:5px;
+    background:#222;
+    color:#0f0;
+    border:1px solid #0f0;
+    cursor:pointer;
 }
-
-canvas {
-    max-width:90%;
-    margin:auto;
+button:disabled{opacity:0.4;cursor:not-allowed}
+.bar{
+    width:100%;
+    height:25px;
+    background:#333;
+    border-radius:10px;
+    overflow:hidden;
+    margin:10px 0;
 }
+.fill{
+    height:100%;
+    background:linear-gradient(90deg,#0f0,#4cff4c);
+}
+.section{
+    border:1px solid #333;
+    margin:15px 0;
+    padding:10px;
+}
+.small{font-size:14px;color:#aaa}
 </style>
 </head>
-
 <body>
 
-<h2>CoinIMP – Hashes en temps réel</h2>
+<div class="container">
+<h1>💎 Deadspot Click Game</h1>
 
-<div id="digitalCounter" class="counter">000000000</div>
+<div>
+<b>Deadspot :</b> <span id="dsp">0</span> DSP<br>
+<b>Énergie :</b> <span id="energy">500</span>/<span id="maxEnergy">500</span>
+</div>
 
-<canvas id="chart"></canvas>
+<div class="bar">
+    <div class="fill" id="energyBar"></div>
+</div>
+
+<button onclick="clickGame()">🔥 CLICK</button>
+
+<!-- UPGRADES -->
+<div class="section">
+<h2>🛠️ Upgrades</h2>
+<button onclick="buyUpgrade('double')">x2 Click (10 DSP)</button>
+<button onclick="buyUpgrade('regen')">Regen +5 (8 DSP)</button>
+<button onclick="buyUpgrade('auto')">Auto-click 2s (25 DSP)</button><br>
+<button onclick="buyUpgrade('max100')">Max Energy +100 (5 DSP)</button>
+<button onclick="buyUpgrade('max200')">+200 (10 DSP)</button>
+<button onclick="buyUpgrade('max300')">+300 (20 DSP)</button>
+<button onclick="buyUpgrade('max400')">+400 (40 DSP)</button>
+<button onclick="buyUpgrade('max500')">+500 (80 DSP)</button><br>
+<button onclick="buyUpgrade('crit')">Critique +5% (15 DSP)</button>
+<button onclick="buyUpgrade('triple')">Triple +5% (20 DSP)</button>
+
+<p class="small">
+Critique: <span id="crit">30</span>% | Triple: <span id="triple">0</span>%
+</p>
+</div>
+
+<!-- FAUCET -->
+<div class="section">
+<h2>💧 Faucet Deadspot</h2>
+<button id="faucetBtn" onclick="claimFaucet()">Réclamer</button>
+<p id="faucetTimer" class="small"></p>
+</div>
+
+<!-- REFERRALS -->
+<div class="section">
+<h2>🔗 Referrals</h2>
+<p class="small">Invite tes amis :</p>
+<input style="width:90%" value="https://tonsite.com/?ref=TONID">
+</div>
+
+</div>
 
 <script>
-const SITE_KEY = "c909ccf8810603fd4771d73c7ea34f460ef48b2eb49dfefbc072127a27495c39";
-const API_URL = `https://www.coinimp.com/api/v2/site/${SITE_KEY}`;
+let data = JSON.parse(localStorage.getItem("dspGame")) || {
+    dsp:0,
+    energy:500,
+    maxEnergy:500,
+    clickPower:0.02,
+    regen:5,
+    auto:false,
+    crit:30,
+    triple:0,
+    faucet:0
+};
 
-let labels = [];
-let values = [];
+function save(){localStorage.setItem("dspGame",JSON.stringify(data));}
 
-const ctx = document.getElementById("chart").getContext("2d");
-
-const chart = new Chart(ctx, {
-    type: "line",
-    data: {
-        labels: labels,
-        datasets: [{
-            label: "Total Hashes",
-            data: values,
-            borderWidth: 2,
-            tension: 0.25
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: { beginAtZero: true }
-        }
-    }
-});
-
-function formatCounter(num) {
-    return num.toString().padStart(9, "0");
+function update(){
+    dsp.innerText=data.dsp.toFixed(4);
+    energy.innerText=Math.floor(data.energy);
+    maxEnergy.innerText=data.maxEnergy;
+    energyBar.style.width=(data.energy/data.maxEnergy*100)+"%";
+    crit.innerText=data.crit;
+    triple.innerText=data.triple;
 }
-
-async function update() {
-    try {
-        const res = await fetch(API_URL);
-        const json = await res.json();
-
-        // CoinIMP retourne total_hashes
-        const hashes = Math.floor(json.total_hashes || 0);
-
-        document.getElementById("digitalCounter").textContent =
-            formatCounter(hashes);
-
-        const time = new Date().toLocaleTimeString();
-        labels.push(time);
-        values.push(hashes);
-
-        if (labels.length > 25) {
-            labels.shift();
-            values.shift();
-        }
-
-        chart.update();
-    } catch (e) {
-        console.error("Erreur CoinIMP", e);
-    }
-}
-
 update();
-setInterval(update, 5000);
+
+function clickGame(){
+    if(data.energy<1) return;
+    data.energy--;
+    let gain=data.clickPower;
+
+    if(Math.random()*100<data.triple){
+        gain*=3;
+    }else if(Math.random()*100<data.crit){
+        gain*=2;
+    }
+
+    data.dsp+=gain;
+    save();update();
+}
+
+setInterval(()=>{
+    data.energy=Math.min(data.energy+data.regen,data.maxEnergy);
+    save();update();
+},10000);
+
+let autoInterval;
+function buyUpgrade(type){
+    let cost=0;
+    if(type==="double"){cost=10;data.clickPower*=2;}
+    if(type==="regen"){cost=8;data.regen+=5;}
+    if(type==="auto"){cost=25;if(!data.auto){data.auto=true;autoInterval=setInterval(clickGame,2000);}}
+    if(type==="max100"){cost=5;data.maxEnergy+=100;}
+    if(type==="max200"){cost=10;data.maxEnergy+=200;}
+    if(type==="max300"){cost=20;data.maxEnergy+=300;}
+    if(type==="max400"){cost=40;data.maxEnergy+=400;}
+    if(type==="max500"){cost=80;data.maxEnergy+=500;}
+    if(type==="crit"){cost=15;data.crit+=5;}
+    if(type==="triple"){cost=20;data.triple+=5;}
+
+    if(data.dsp<cost) return alert("Pas assez de Deadspot");
+    data.dsp-=cost;
+    save();update();
+}
+
+function claimFaucet(){
+    let now=Date.now();
+    if(now<data.faucet){
+        alert("Faucet en cooldown");
+        return;
+    }
+    let gain=(Math.random()*4.99+0.01);
+    data.dsp+=gain;
+    data.faucet=now+1800000;
+    save();update();
+}
+
+setInterval(()=>{
+    let t=data.faucet-Date.now();
+    faucetTimer.innerText=t>0?"Disponible dans "+Math.ceil(t/60000)+" min":"Disponible";
+},1000);
 </script>
 
 </body>
 </html>
-
